@@ -17,7 +17,7 @@ var settings = {
     badgeDisplay: BADGE_DISPLAY_DEFAULT,
     screenshotInstructionsRead: SCREENSHOT_INSTRUCTIONS_READ_DEFAULT
 };
-// this
+
 let domainsChanged = !1;
 const STORAGE_DOMAINS = "domains",
     STORAGE_DATE_START = "date-start",
@@ -31,7 +31,6 @@ const STORAGE_DOMAINS = "domains",
 
 function loadDomains(a) {
     storageLocal.load("domains", {}, e => {
-        console.log(e); // change
         a(e), dcl(`Domains loaded: ${Object.keys(domains).length} domains`)
     })
 }
@@ -142,22 +141,38 @@ function setBadge(a, e) {
     })
 }
 
+async function getLeetCodeProblemsData(){
+        const response = await fetch('https://leetcode.com/api/problems/algorithms', {
+            mode: 'cors'
+        });
+        const myJson = await response.json(); //extract JSON from the http response
+        console.log(myJson);
+        // do something with myJson
+
+}
+
 function updateDomains(a) {
     let e, t, s, d = getDateString();
     dates.today !== d && (dates.today = d, seconds.today = 0), chrome.windows.getLastFocused({
         populate: !0
-    }, d => {
-        for (let a in d.tabs)
-            if (d.tabs.hasOwnProperty(a) && !0 === d.tabs[a].active) {
-                s = d.tabs[a];
-                break
-            } chrome.idle.queryState(settings.idleTime, o => {
+    }, 
+    d => {
+    for (let a in d.tabs)
+        if (d.tabs.hasOwnProperty(a) && !0 === d.tabs[a].active) {
+            s = d.tabs[a];
+            break
+        } 
+        chrome.idle.queryState(settings.idleTime, o => {
             d.id, d.focused;
             let n = s.id;
             s.url;
-            if (e = parseDomainFromUrl(s.url), t = parseProtocolFromUrl(s.url), (d.focused && "active" === o || a) && -1 === BLACKLIST_DOMAIN.indexOf(e) && -1 === BLACKLIST_PROTOCOL.indexOf(t) && "" !== e) {
+            // console.log(Object.keys(domains))
+            e = parseDomainFromUrl(s.url);
+
+            if (t = parseProtocolFromUrl(s.url), e == "leetcode.com" && (d.focused && "active" === o || a) && -1 === BLACKLIST_DOMAIN.indexOf(e) && -1 === BLACKLIST_PROTOCOL.indexOf(t) && "" !== e) {
                 dcl("LOG (" + dates.today + "): " + e), domains.hasOwnProperty(e) || (domains[e] = getDomainObj(), domains[e].name = e);
                 let t = domains[e];
+                // console.log(e)
                 t.days[dates.today] = t.days[dates.today] || getDayObj(), a || (t.alltime.seconds += INTERVAL_UPDATE_S, t.days[dates.today].seconds += INTERVAL_UPDATE_S, seconds.today += INTERVAL_UPDATE_S, seconds.alltime += INTERVAL_UPDATE_S, domainsChanged = !0), setBadge(n, getBadgeTimeString(t.days[dates.today].seconds))
             }
         })
@@ -169,25 +184,45 @@ function updateDomains(a) {
 // according to official documentation: Fires when the active tab in a window changes.
 // remember nomenclature t = tabId for all furthur scripts
 chrome.tabs.onActivated.addListener(a => {
-    let e, t = a.tabId;
-    chrome.tabs.get(t, a => {
-        e = parseDomainFromUrl(a.url), setBadge(t, ""), domains[e] && domains[e].days[dates.today] && setBadge(t, getBadgeTimeString(domains[e].days[dates.today].seconds))
-    })
-}), 
-dcl("Webtime Tracker - background.js loaded"), 
+    chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
+        let url = tabs[0].url;
+        // use `url` here inside the callback because it's asynchronous!
+        // alert(url.split(".com")[0]);
+        if(url.split(".com")[0] == "https://leetcode")
+        {
+            let e, t = a.tabId;
+            chrome.tabs.get(t, a => {
+                e = parseDomainFromUrl(a.url), setBadge(t, ""), domains[e] && domains[e].days[dates.today] && setBadge(t, getBadgeTimeString(domains[e].days[dates.today].seconds))
+            })
+        }     
+    });
+})
+
+
+// the code below is ran of the first time browser is launched
+dcl("LeetCode Tracker - background.js loaded")
+
+getLeetCodeProblemsData();
 
 // tracking functions
-loadDateStart(dates.today), loadSecondsAlltime(), loadIdleTime(), loadGraphGap(), loadBadgeDisplay(), loadScreenshotInstructionsRead(), 
+loadDateStart(dates.today)
+loadSecondsAlltime()
+loadIdleTime()
+loadGraphGap()
+loadBadgeDisplay()
+loadScreenshotInstructionsRead() 
 
 loadDomains(a => {
-    domains = a.domains || [], seconds.today = getTotalSecondsForDate(domains, getDateString())
-}), 
+    domains = a.domains || []
+    seconds.today = getTotalSecondsForDate(domains, getDateString())
+})
+
 timeIntervals.update = window.setInterval(() => {
     updateDomains()
-}, INTERVAL_UPDATE_MS), 
+}, INTERVAL_UPDATE_MS)
 
 timeIntervals.save = window.setInterval(() => {
-    domainsChanged && (saveDomains(), saveSecondsAlltime(), chrome.storage.local.getBytesInUse(null, a => {
+    domainsChanged && (saveDomains(), saveSecondsAlltime(), chrome.storage.sync.getBytesInUse(null, a => {
         dcl("Total storage used: " + a + " B")
     }))
-}, INTERVAL_SAVE_MS);
+}, INTERVAL_UPDATE_MS);

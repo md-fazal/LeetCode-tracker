@@ -1,3 +1,4 @@
+//it is ran when user click on extension
 const backgroundJS = chrome.extension.getBackgroundPage(),
     htmlTemplates = document.querySelector(".js-templates");
 let data, html, ranks = {};
@@ -122,6 +123,8 @@ const screenshotUIShow = () => {
     initialize = () => {
         renderUI(), window.location.search === SCREENSHOT_MODE_QUERY && (SCREENSHOT_MODE = !0, screenshotUIShow()), dcl("Application initialized")
     };
+
+    
 renderUI(), window.location.search === SCREENSHOT_MODE_QUERY && (SCREENSHOT_MODE = !0, screenshotUIShow()), dcl("Application initialized"), addMultipleDelegatedEventListeners("body", "click", (e, t) => {
     if (e.detail >= 2)
         if (document.selection && document.selection.empty) document.selection.empty();
