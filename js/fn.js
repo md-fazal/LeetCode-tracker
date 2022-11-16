@@ -6,6 +6,7 @@ const dcl = e => {
         let t, n;
         return n = document.createElement("a"), n.href = e, t = n.hostname, t
     },
+    
     parseProtocolFromUrl = e => {
         let t, n;
         return n = document.createElement("a"), n.href = e, t = n.protocol, t

@@ -141,15 +141,16 @@ function setBadge(a, e) {
     })
 }
 
-async function getLeetCodeProblemsData(){
-        const response = await fetch('https://leetcode.com/api/problems/algorithms', {
-            mode: 'cors'
-        });
-        const myJson = await response.json(); //extract JSON from the http response
-        console.log(myJson);
-        // do something with myJson
+// CALL THIS JUST BEFORE USER CLOSES CHROME
+// async function getLeetCodeProblemsData(){
+//         const response = await fetch('https://leetcode.com/api/problems/algorithms', {
+//             mode: 'cors'
+//         });
+//         const myJson = await response.json(); //extract JSON from the http response
+//         console.log(myJson);
+//         // do something with myJson
 
-}
+// }
 
 function updateDomains(a) {
     let e, t, s, d = getDateString();
@@ -166,13 +167,14 @@ function updateDomains(a) {
             d.id, d.focused;
             let n = s.id;
             s.url;
-            // console.log(Object.keys(domains))
-            e = parseDomainFromUrl(s.url);
 
-            if (t = parseProtocolFromUrl(s.url), e == "leetcode.com" && (d.focused && "active" === o || a) && -1 === BLACKLIST_DOMAIN.indexOf(e) && -1 === BLACKLIST_PROTOCOL.indexOf(t) && "" !== e) {
+            if (t = parseProtocolFromUrl(s.url), s.url.search("https://leetcode.com/problems/") == 0 && (d.focused && "active" === o || a) && -1 === BLACKLIST_DOMAIN.indexOf(e) && -1 === BLACKLIST_PROTOCOL.indexOf(t) && "" !== e) {
+                // e is the name of the problem parse from url
+                e = s.url.split("/")[4]
+                // alert(e)
                 dcl("LOG (" + dates.today + "): " + e), domains.hasOwnProperty(e) || (domains[e] = getDomainObj(), domains[e].name = e);
                 let t = domains[e];
-                // console.log(e)
+                console.log(e)
                 t.days[dates.today] = t.days[dates.today] || getDayObj(), a || (t.alltime.seconds += INTERVAL_UPDATE_S, t.days[dates.today].seconds += INTERVAL_UPDATE_S, seconds.today += INTERVAL_UPDATE_S, seconds.alltime += INTERVAL_UPDATE_S, domainsChanged = !0), setBadge(n, getBadgeTimeString(t.days[dates.today].seconds))
             }
         })
@@ -183,12 +185,15 @@ function updateDomains(a) {
 // when a tab is changed all the functions passed to onActivated are invoked
 // according to official documentation: Fires when the active tab in a window changes.
 // remember nomenclature t = tabId for all furthur scripts
+
+// chrome.tabs.executeScript(null, { file: './foreground.js' }, () => console.log('foreground injected'));
+
 chrome.tabs.onActivated.addListener(a => {
     chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
         let url = tabs[0].url;
         // use `url` here inside the callback because it's asynchronous!
         // alert(url.split(".com")[0]);
-        if(url.split(".com")[0] == "https://leetcode")
+        if(url.search("https://leetcode.com/problems/") == 0)
         {
             let e, t = a.tabId;
             chrome.tabs.get(t, a => {
@@ -202,7 +207,7 @@ chrome.tabs.onActivated.addListener(a => {
 // the code below is ran of the first time browser is launched
 dcl("LeetCode Tracker - background.js loaded")
 
-getLeetCodeProblemsData();
+// getLeetCodeProblemsData();
 
 // tracking functions
 loadDateStart(dates.today)
